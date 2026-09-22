@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevMind // Git & Tech Lead Miner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b',
+              950: '#022c22',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #e2e8f0;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.9; }
+    }
+    .pulse-radar {
+      animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-black">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono font-bold shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-bold tracking-tight text-white font-mono">DevMind</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Lead Miner v1.2</span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Target Tech Leads & Engineering Intelligence via GitHub Public Data</p>
+        </div>
+      </div>
+
+      <!-- Rate Limit & Token Pill Controls -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Rate limit pill -->
+        <div id="rateLimitBadge" class="flex items-center space-x-2 px-2.5 sm:px-3 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs font-mono" title="GitHub API Rate Limit Status">
+          <span id="rateLimitDot" class="inline-block w-2 h-2 rounded-full bg-slate-500"></span>
+          <span class="text-slate-400 hidden md:inline">API Rate:</span>
+          <span id="rateLimitCount" class="text-slate-300 font-semibold">--/--</span>
+          <span id="rateLimitMode" class="text-[10px] text-slate-500 hidden sm:inline">(Public)</span>
+        </div>
+
+        <!-- Dynamic User / Token Pill -->
+        <div id="tokenHeaderWrapper" class="relative">
+          <button id="tokenStatusBtn" onclick="openTokenModal()" 
+                  class="text-xs px-2.5 sm:px-3 py-1.5 rounded-md border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 flex items-center space-x-2 transition font-mono shadow-sm">
+            <span id="tokenStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <img id="headerUserAvatar" src="" class="w-4 h-4 rounded-full border border-slate-600 hidden" alt="">
+            <span id="tokenStatusText" class="truncate max-w-[120px] sm:max-w-[150px]">Connect Token</span>
+            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Search & Filter Card -->
+    <div class="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 shadow-xl backdrop-blur-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <span>Filter Criteria for Tech Talent</span>
+            <span class="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">Discovery Engine</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Query GitHub's search index and public commit streams for engineering leaders in your target domain.</p>
+        </div>
+        
+        <!-- Preset Filters -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+          <span class="text-slate-500 text-[11px] mr-1">Presets:</span>
+          <button onclick="applyPreset('Egypt CTOs', 'CTO', 'Egypt', '', 5)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">🇪🇬 Egypt CTOs</button>
+          <button onclick="applyPreset('Egypt Tech Leads', 'Tech Lead', 'Egypt', '', 5)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">🇪🇬 Tech Leads</button>
+          <button onclick="applyPreset('Eng Managers', 'Engineering Manager', 'Egypt', '', 3)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">👔 Eng Managers</button>
+          <button onclick="applyPreset('Gulf / UAE CTOs', 'CTO', 'UAE', '', 5)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">🇦🇪 UAE / Gulf</button>
+          <button onclick="applyPreset('Backend Architects', 'Architect', 'Egypt', 'Python', 5)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">🏛 Architects</button>
+        </div>
+      </div>
+
+      <!-- Search Input Grid -->
+      <form id="searchForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5 mt-4">
+        <div class="lg:col-span-2">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Role / Bio Keyword</label>
+          <input type="text" id="roleInput" value="CTO" placeholder="e.g. CTO, Tech Lead, Engineering Manager" 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Location</label>
+          <input type="text" id="locationInput" value="Egypt" placeholder="e.g. Egypt, Cairo, Saudi Arabia" 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Tech Stack (Optional)</label>
+          <input type="text" id="languageInput" value="" placeholder="e.g. Python, TypeScript, Go" 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Min Followers</label>
+          <input type="number" id="minFollowersInput" value="3" min="0" 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Sample Size</label>
+          <select id="limitInput" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono">
+            <option value="15">15 Profiles</option>
+            <option value="30" selected>30 Profiles</option>
+            <option value="50">50 Profiles</option>
+            <option value="100">100 Profiles (Deep)</option>
+          </select>
+        </div>
+
+        <div class="lg:col-span-6 flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <div class="flex items-center space-x-2 text-xs text-slate-400">
+            <input type="checkbox" id="deepScanCommitEmails" checked class="rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0">
+            <label for="deepScanCommitEmails" class="cursor-pointer">
+              Mine deep commit history for hidden author emails <span class="text-emerald-400 font-mono">(/events/public)</span>
+            </label>
+          </div>
+
+          <button type="submit" id="submitSearchBtn" 
+                  class="w-full sm:w-auto px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold rounded-lg text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-500/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <span id="submitSearchBtnLabel">Scan & Mine Leads</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Scan Progress Bar -->
+    <div id="scanProgressCard" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 shadow-lg">
+      <div class="flex items-center justify-between text-xs font-mono">
+        <span id="scanStatusMsg" class="text-slate-300 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-radar"></span>
+          Mining GitHub users...
+        </span>
+        <span id="scanPercentText" class="text-emerald-400 font-bold">0%</span>
+      </div>
+      <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+        <div id="scanProgressBar" class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-1.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Stats Dashboard (Clean 3-column layout) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3.5">
+        <p class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Total Discovered</p>
+        <p id="statTotalDiscovered" class="text-2xl font-bold text-white font-mono mt-1">0</p>
+      </div>
+      <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3.5">
+        <p class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Verified Emails</p>
+        <p id="statVerifiedEmails" class="text-2xl font-bold text-emerald-400 font-mono mt-1">0</p>
+      </div>
+      <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3.5">
+        <p class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Commit Email Recovery</p>
+        <p id="statCommitRecovered" class="text-2xl font-bold text-cyan-400 font-mono mt-1">0%</p>
+      </div>
+    </div>
+
+    <!-- Table Header Controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+      <div class="flex items-center space-x-2">
+        <span class="text-sm font-semibold text-white">Extracted Engineering Leads</span>
+        <span id="resultCountPill" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">0 results</span>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- Quick Filter Switch -->
+        <button id="filterEmailOnlyBtn" onclick="toggleFilterEmailOnly()" 
+                class="text-xs px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono flex items-center space-x-1.5 transition">
+          <span id="filterEmailDot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+          <span>Verified Email Only</span>
+        </button>
+
+        <!-- CSV Export Button -->
+        <button id="exportCsvBtn" onclick="exportLeadsCSV()" 
+                class="text-xs px-3.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-mono flex items-center space-x-1.5 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          <span>Export CSV</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Leads Table -->
+    <div class="border border-slate-800 rounded-xl bg-slate-950/60 overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-900/90 text-slate-400 font-mono uppercase text-[10px] tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Engineer / Profile</th>
+              <th class="py-3 px-4">Bio / Inferred Role</th>
+              <th class="py-3 px-4">Company</th>
+              <th class="py-3 px-4">Location</th>
+              <th class="py-3 px-4">Extracted Email</th>
+              <th class="py-3 px-4">Priority</th>
+              <th class="py-3 px-4 text-right">Links & Actions</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableBody" class="divide-y divide-slate-800/80">
+            <!-- Empty state default -->
+            <tr id="emptyPlaceholderRow">
+              <td colspan="7" class="py-16 text-center text-slate-500 space-y-2">
+                <div class="w-12 h-12 mx-auto rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                  </svg>
+                </div>
+                <p class="font-medium text-slate-400">No leads queried yet</p>
+                <p class="text-[11px] text-slate-600">Click "Scan & Mine Leads" above to begin querying GitHub's public API.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== BYOK TOKEN MODAL ==================== -->
+  <div id="tokenModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-lg w-full max-h-[95vh] overflow-y-auto custom-scrollbar shadow-2xl p-6 space-y-4">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="modalTitle" class="text-sm font-bold text-white font-mono">GitHub API Authentication (BYOK)</h3>
+            <p id="modalSubtitle" class="text-[11px] text-slate-400">Unlock 5,000 queries/hr with your Personal Access Token</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeTokenModal()" class="text-slate-400 hover:text-white text-lg font-mono">&times;</button>
+      </div>
+
+      <!-- Rate limit notice banner (shown dynamically if rate limited) -->
+      <div id="rateLimitWarningBanner" class="hidden bg-amber-950/40 border border-amber-800/80 rounded-lg p-3 text-xs text-amber-200 font-mono space-y-1">
+        <div class="font-bold flex items-center gap-1.5 text-amber-300">
+          <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>Public Rate Limit Exceeded (60 req/hr)</span>
+        </div>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          GitHub unauthenticated queries are limited to 60 requests per hour. Connect your free personal token below to unlock <strong>5,000 requests per hour</strong>.
+        </p>
+      </div>
+
+      <!-- Current Connected User Card (if token exists) -->
+      <div id="tokenActiveUserCard" class="hidden bg-slate-950 p-3 rounded-lg border border-slate-800 flex items-center justify-between text-xs font-mono">
+        <div class="flex items-center space-x-3">
+          <img id="modalUserAvatar" src="" class="w-8 h-8 rounded-full border border-slate-700" alt="">
+          <div>
+            <div id="modalUserName" class="text-white font-semibold flex items-center gap-1.5">--</div>
+            <div id="modalUserLogin" class="text-slate-500 text-[11px]">@--</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="inline-block px-2 py-0.5 rounded bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-[10px]">Connected</span>
+          <div id="modalRateRemaining" class="text-[10px] text-slate-400 mt-0.5">Rate: --/--</div>
+        </div>
+      </div>
+
+      <!-- Privacy & Storage Guarantee Note -->
+      <div class="bg-emerald-950/20 border border-emerald-900/60 rounded-lg p-3 space-y-1.5">
+        <div class="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-400">
+          <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span>Client-Side Security (BYOK)</span>
+        </div>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          Your token is stored <strong>only in your browser</strong> via <code class="text-emerald-400 font-mono">localStorage</code>. It is never logged or passed to any server, and is sent exclusively to <code class="text-emerald-400 font-mono">api.github.com</code>.
+        </p>
+      </div>
+
+      <!-- Instructions & Link -->
+      <div class="text-xs text-slate-400 space-y-1.5">
+        <p class="font-medium text-slate-300">How to get a free Personal Access Token:</p>
+        <ol class="list-decimal list-inside text-[11px] text-slate-400 space-y-1">
+          <li>Visit <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer" class="text-emerald-400 hover:underline inline-flex items-center gap-0.5">GitHub Token Settings <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a></li>
+          <li>Generate a <strong>Personal Access Token (classic)</strong> with <code class="text-slate-200">public_repo</code> and <code class="text-slate-200">read:user</code> scopes (or fine-grained with public access).</li>
+          <li>Paste the token below to switch from 60 to 5,000 queries/hour.</li>
+        </ol>
+      </div>
+
+      <!-- Input Field with Mask / Show-Hide Toggle -->
+      <div>
+        <label class="block text-xs font-mono text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
+        <div class="relative flex items-center">
+          <input type="password" id="modalTokenInput" placeholder="ghp_... or github_pat_..." 
+                 autocomplete="off" spellcheck="false"
+                 class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-10 py-2.5 text-xs font-mono text-emerald-300 placeholder-slate-600 focus:outline-none focus:border-emerald-500">
+          <button type="button" onclick="toggleTokenMask()" class="absolute right-2.5 text-slate-500 hover:text-slate-300 transition" title="Show / Hide Token">
+            <svg id="tokenEyeOpen" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            <svg id="tokenEyeClosed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline Feedback / Verification status -->
+      <div id="tokenVerificationFeedback" class="text-xs font-mono min-h-[1.25rem]"></div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+        <button type="button" id="btnWipeToken" onclick="wipeStoredToken()" 
+                class="hidden text-xs text-rose-400 hover:text-rose-300 font-mono hover:underline flex items-center gap-1 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          <span>Clear / Wipe Token</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button type="button" onclick="closeTokenModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg font-mono transition">Close</button>
+          <button type="button" id="btnSaveConnectToken" onclick="handleConnectTokenSubmit()" 
+                  class="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg font-mono transition flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+            <svg id="saveTokenSpinner" class="w-3.5 h-3.5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span id="btnSaveConnectLabel">Save & Connect</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+  <script>
+    // Storage Key
+    const STORAGE_KEY_TOKEN = 'leadminer_gh_pat';
+    const STORAGE_KEY_USER = 'leadminer_gh_user';
+
+    // State management: Zero email features, zero hardcoded credentials
+    let state = {
+      token: '',
+      user: null,
+      leads: [],
+      filteredLeads: [],
+      isScanning: false,
+      filterVerifiedOnly: false
+    };
+
+    // DOM Elements Cache
+    const elements = {
+      // Header & Token UI
+      rateLimitBadge: document.getElementById('rateLimitBadge'),
+      rateLimitDot: document.getElementById('rateLimitDot'),
+      rateLimitCount: document.getElementById('rateLimitCount'),
+      rateLimitMode: document.getElementById('rateLimitMode'),
+      tokenStatusBtn: document.getElementById('tokenStatusBtn'),
+      tokenStatusDot: document.getElementById('tokenStatusDot'),
+      tokenStatusText: document.getElementById('tokenStatusText'),
+      headerUserAvatar: document.getElementById('headerUserAvatar'),
+
+      // BYOK Token Modal
+      tokenModal: document.getElementById('tokenModal'),
+      modalTitle: document.getElementById('modalTitle'),
+      modalSubtitle: document.getElementById('modalSubtitle'),
+      rateLimitWarningBanner: document.getElementById('rateLimitWarningBanner'),
+      modalTokenInput: document.getElementById('modalTokenInput'),
+      tokenVerificationFeedback: document.getElementById('tokenVerificationFeedback'),
+      btnSaveConnectToken: document.getElementById('btnSaveConnectToken'),
+      btnSaveConnectLabel: document.getElementById('btnSaveConnectLabel'),
+      saveTokenSpinner: document.getElementById('saveTokenSpinner'),
+      btnWipeToken: document.getElementById('btnWipeToken'),
+      tokenActiveUserCard: document.getElementById('tokenActiveUserCard'),
+      modalUserAvatar: document.getElementById('modalUserAvatar'),
+      modalUserName: document.getElementById('modalUserName'),
+      modalUserLogin: document.getElementById('modalUserLogin'),
+      modalRateRemaining: document.getElementById('modalRateRemaining'),
+      tokenEyeOpen: document.getElementById('tokenEyeOpen'),
+      tokenEyeClosed: document.getElementById('tokenEyeClosed'),
+
+      // Search & Filters
+      searchForm: document.getElementById('searchForm'),
+      roleInput: document.getElementById('roleInput'),
+      locationInput: document.getElementById('locationInput'),
+      languageInput: document.getElementById('languageInput'),
+      minFollowersInput: document.getElementById('minFollowersInput'),
+      limitInput: document.getElementById('limitInput'),
+      deepScanCheckbox: document.getElementById('deepScanCommitEmails'),
+      scanProgressCard: document.getElementById('scanProgressCard'),
+      scanProgressBar: document.getElementById('scanProgressBar'),
+      scanPercentText: document.getElementById('scanPercentText'),
+      scanStatusMsg: document.getElementById('scanStatusMsg'),
+      submitSearchBtn: document.getElementById('submitSearchBtn'),
+      submitSearchBtnLabel: document.getElementById('submitSearchBtnLabel'),
+
+      // Results Table & Stats
+      tableBody: document.getElementById('leadsTableBody'),
+      resultCountPill: document.getElementById('resultCountPill'),
+      filterEmailOnlyBtn: document.getElementById('filterEmailOnlyBtn'),
+      filterEmailDot: document.getElementById('filterEmailDot'),
+      statTotal: document.getElementById('statTotalDiscovered'),
+      statVerified: document.getElementById('statVerifiedEmails'),
+      statCommitRate: document.getElementById('statCommitRecovered'),
+      toastContainer: document.getElementById('toastContainer')
+    };
+
+    // ==================== NOTIFICATION TOAST ====================
+    function showToast(message, type = 'info') {
+      const container = elements.toastContainer || document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const borderCol = type === 'error' 
+        ? 'border-rose-500/70 text-rose-300 bg-slate-900/95 shadow-rose-950/30' 
+        : (type === 'success' ? 'border-emerald-500/70 text-emerald-300 bg-slate-900/95 shadow-emerald-950/30' : 'border-cyan-500/70 text-cyan-300 bg-slate-900/95 shadow-cyan-950/30');
+      const icon = type === 'error' ? '✕' : (type === 'success' ? '✓' : 'ℹ');
+      toast.className = `flex items-center gap-2.5 px-3.5 py-2 rounded-lg border text-xs font-mono shadow-2xl backdrop-blur transition-all duration-300 transform translate-y-2 opacity-0 ${borderCol}`;
+      toast.innerHTML = `<span class="font-bold">${icon}</span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // ==================== CLIENT-SIDE BYOK TOKEN MANAGEMENT ====================
+
+    function getStoredToken() {
+      try {
+        return localStorage.getItem(STORAGE_KEY_TOKEN) || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function setStoredToken(token) {
+      try {
+        if (token) {
+          localStorage.setItem(STORAGE_KEY_TOKEN, token);
+        } else {
+          localStorage.removeItem(STORAGE_KEY_TOKEN);
+        }
+      } catch (e) {}
+    }
+
+    function getStoredUser() {
+      try {
+        const u = localStorage.getItem(STORAGE_KEY_USER);
+        return u ? JSON.parse(u) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setStoredUser(user) {
+      try {
+        if (user) {
+          localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+        } else {
+          localStorage.removeItem(STORAGE_KEY_USER);
+        }
+      } catch (e) {}
+    }
+
+    function openTokenModal(isRateLimitExceeded = false) {
+      elements.tokenVerificationFeedback.innerHTML = '';
+      elements.modalTokenInput.value = state.token || '';
+      
+      if (isRateLimitExceeded) {
+        elements.rateLimitWarningBanner.classList.remove('hidden');
+        elements.modalTitle.innerText = "GitHub Rate Limit Reached";
+        elements.modalSubtitle.innerText = "Connect your GitHub Token to unlock 5,000 queries/hour";
+      } else {
+        elements.rateLimitWarningBanner.classList.add('hidden');
+        elements.modalTitle.innerText = "GitHub API Authentication (BYOK)";
+        elements.modalSubtitle.innerText = "Unlock 5,000 queries/hr with your Personal Access Token";
+      }
+
+      // Update modal state based on existing connection
+      if (state.token && state.user) {
+        elements.btnWipeToken.classList.remove('hidden');
+        elements.tokenActiveUserCard.classList.remove('hidden');
+        elements.modalUserAvatar.src = state.user.avatar_url || '';
+        elements.modalUserName.innerText = state.user.name || state.user.login || 'GitHub User';
+        elements.modalUserLogin.innerText = `@${state.user.login || ''}`;
+        elements.btnSaveConnectLabel.innerText = "Update Token";
+      } else {
+        elements.btnWipeToken.classList.add('hidden');
+        elements.tokenActiveUserCard.classList.add('hidden');
+        elements.btnSaveConnectLabel.innerText = "Save & Connect";
+      }
+
+      elements.tokenModal.classList.remove('hidden');
+      setTimeout(() => elements.modalTokenInput.focus(), 50);
+    }
+
+    function closeTokenModal() {
+      elements.tokenModal.classList.add('hidden');
+      elements.tokenVerificationFeedback.innerHTML = '';
+      elements.rateLimitWarningBanner.classList.add('hidden');
+    }
+
+    function toggleTokenMask() {
+      const input = elements.modalTokenInput;
+      if (input.type === 'password') {
+        input.type = 'text';
+        elements.tokenEyeOpen.classList.remove('hidden');
+        elements.tokenEyeClosed.classList.add('hidden');
+      } else {
+        input.type = 'password';
+        elements.tokenEyeOpen.classList.add('hidden');
+        elements.tokenEyeClosed.classList.remove('hidden');
+      }
+    }
+
+    // Returns headers: unauthenticated public API if no token is set
+    function getHeaders(customToken = null) {
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json',
+      };
+      const activeToken = customToken !== null ? customToken : state.token;
+      if (activeToken && activeToken.trim().length > 0) {
+        headers['Authorization'] = `Bearer ${activeToken.trim()}`;
+      }
+      return headers;
+    }
+
+    // Verify token against GitHub API /user endpoint
+    async function verifyGitHubToken(tokenCandidate) {
+      const res = await fetch('https://api.github.com/user', {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `Bearer ${tokenCandidate.trim()}`
+        }
+      });
+
+      const rateLimitRemaining = res.headers.get('x-ratelimit-remaining');
+      const rateLimitTotal = res.headers.get('x-ratelimit-limit');
+
+      if (!res.ok) {
+        let errMsg = "Invalid Token or Expired - please verify permissions";
+        if (res.status === 401) {
+          errMsg = "Invalid GitHub Token (401 Bad Credentials). Please re-check.";
+        } else if (res.status === 403) {
+          errMsg = "Access forbidden (403). Token may have expired or rate limit exhausted.";
+        }
+        throw new Error(errMsg);
+      }
+
+      const userData = await res.json();
+      return {
+        user: userData,
+        rateRemaining: rateLimitRemaining,
+        rateLimit: rateLimitTotal
+      };
+    }
+
+    async function handleConnectTokenSubmit() {
+      const rawToken = elements.modalTokenInput.value.trim();
+      const feedback = elements.tokenVerificationFeedback;
+      const btn = elements.btnSaveConnectToken;
+      const spinner = elements.saveTokenSpinner;
+      const label = elements.btnSaveConnectLabel;
+
+      if (!rawToken) {
+        feedback.innerHTML = '<span class="text-rose-400">Please enter a valid GitHub Personal Access Token.</span>';
+        return;
+      }
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      label.innerText = "Verifying with GitHub...";
+      feedback.innerHTML = '<span class="text-cyan-400 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> Checking token permissions at api.github.com...</span>';
+
+      try {
+        const result = await verifyGitHubToken(rawToken);
+
+        // Success: Store strictly in localStorage
+        setStoredToken(rawToken);
+        const userInfo = {
+          login: result.user.login,
+          avatar_url: result.user.avatar_url,
+          name: result.user.name || result.user.login
+        };
+        setStoredUser(userInfo);
+
+        state.token = rawToken;
+        state.user = userInfo;
+
+        updateHeaderUIConnected(userInfo, result.rateRemaining, result.rateLimit);
+        showToast(`Connected as @${userInfo.login}! 5,000 req/hr enabled.`, "success");
+
+        feedback.innerHTML = `<span class="text-emerald-400 font-semibold">✓ Verified! Welcome @${escapeHtml(userInfo.login)}</span>`;
+        
+        setTimeout(() => {
+          closeTokenModal();
+          checkRateLimit();
+        }, 800);
+      } catch (err) {
+        feedback.innerHTML = `<div class="p-2 rounded bg-rose-950/50 border border-rose-800/80 text-rose-300">⚠️ ${escapeHtml(err.message)}</div>`;
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        label.innerText = state.token ? "Update Token" : "Save & Connect";
+      }
+    }
+
+    function wipeStoredToken() {
+      setStoredToken('');
+      setStoredUser(null);
+      state.token = '';
+      state.user = null;
+
+      elements.modalTokenInput.value = '';
+      updateHeaderUIDisconnected();
+      closeTokenModal();
+      showToast("Token cleared. Operating on GitHub public rate limit (60 req/hr).", "info");
+      checkRateLimit();
+    }
+
+    function updateHeaderUIConnected(user, remaining, limit) {
+      elements.tokenStatusDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+      elements.headerUserAvatar.src = user.avatar_url;
+      elements.headerUserAvatar.classList.remove('hidden');
+      elements.tokenStatusText.innerText = `@${user.login}`;
+      elements.tokenStatusBtn.classList.replace('border-slate-700', 'border-emerald-500/40');
+      elements.rateLimitMode.innerText = "(PAT: 5k/h)";
+      elements.rateLimitMode.classList.remove('text-slate-500');
+      elements.rateLimitMode.classList.add('text-emerald-400');
+
+      if (remaining !== null && remaining !== undefined && limit) {
+        elements.rateLimitCount.innerText = `${remaining}/${limit}`;
+        elements.rateLimitDot.className = "inline-block w-2 h-2 rounded-full bg-emerald-400";
+      }
+    }
+
+    function updateHeaderUIDisconnected() {
+      elements.tokenStatusDot.className = "w-2 h-2 rounded-full bg-slate-500";
+      elements.headerUserAvatar.classList.add('hidden');
+      elements.tokenStatusText.innerText = "Connect Token";
+      elements.tokenStatusBtn.classList.replace('border-emerald-500/40', 'border-slate-700');
+      elements.rateLimitMode.innerText = "(Public)";
+      elements.rateLimitMode.classList.remove('text-emerald-400');
+      elements.rateLimitMode.classList.add('text-slate-500');
+    }
+
+    async function checkRateLimit() {
+      try {
+        const res = await fetch('https://api.github.com/rate_limit', { headers: getHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          const remaining = data.rate.remaining;
+          const limit = data.rate.limit;
+          elements.rateLimitCount.innerText = `${remaining}/${limit}`;
+
+          if (elements.modalRateRemaining) {
+            elements.modalRateRemaining.innerText = `Rate: ${remaining}/${limit}`;
+          }
+
+          if (remaining === 0) {
+            elements.rateLimitCount.className = "text-rose-400 font-semibold";
+            elements.rateLimitDot.className = "inline-block w-2 h-2 rounded-full bg-rose-400";
+          } else if (remaining < 15) {
+            elements.rateLimitCount.className = "text-amber-400 font-semibold";
+            elements.rateLimitDot.className = "inline-block w-2 h-2 rounded-full bg-amber-400";
+          } else {
+            elements.rateLimitCount.className = state.token ? "text-emerald-400 font-semibold" : "text-slate-300 font-semibold";
+            elements.rateLimitDot.className = state.token ? "inline-block w-2 h-2 rounded-full bg-emerald-400" : "inline-block w-2 h-2 rounded-full bg-cyan-400";
+          }
+        }
+      } catch (e) {
+        // Non-blocking rate check fallback
+      }
+    }
+
+    // ==================== LEAD RESOLUTION & MINING ====================
+
+    function resolveLinkedIn(lead, socialAccounts = []) {
+      // 1. Direct social account from GitHub API
+      if (Array.isArray(socialAccounts)) {
+        const found = socialAccounts.find(s => s.provider === 'linkedin' || (s.url && s.url.includes('linkedin.com')));
+        if (found) {
+          return {
+            url: found.url.startsWith('http') ? found.url : `https://${found.url}`,
+            isDirect: true,
+            xrayUrl: null
+          };
+        }
+      }
+
+      // 2. Direct regex match in bio or blog
+      const bioText = `${lead.bio || ''} ${lead.blog || ''}`;
+      const directMatch = bioText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_-]+)/i);
+      if (directMatch) {
+        return {
+          url: directMatch[0].startsWith('http') ? directMatch[0] : `https://${directMatch[0]}`,
+          isDirect: true,
+          xrayUrl: null
+        };
+      }
+
+      // 3. Google X-Ray & LinkedIn People search fallback
+      const cleanName = (lead.name || lead.username || '').replace(/[^\w\s\u0600-\u06FF]/gi, '').trim();
+      const companyPart = lead.company && lead.company !== 'Software Team' ? ` "${lead.company.replace(/[^\w\s]/gi, '').trim()}"` : '';
+      const xrayQuery = `site:linkedin.com/in/ "${cleanName}"${companyPart}`;
+      
+      return {
+        url: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent((cleanName + (lead.company && lead.company !== 'Software Team' ? ' ' + lead.company : '')).trim())}`,
+        xrayUrl: `https://www.google.com/search?q=${encodeURIComponent(xrayQuery)}`,
+        isDirect: false
+      };
+    }
+
+    function computeTier(lead) {
+      const text = `${lead.bio || ''} ${lead.role || ''} ${lead.company || ''}`.toLowerCase();
+      if (text.includes('cto') || text.includes('head of') || text.includes('director') || text.includes('architect') || text.includes('vp')) {
+        return { tier: 'Tier A', badgeClass: 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300' };
+      }
+      if (text.includes('lead') || text.includes('manager') || text.includes('principal') || text.includes('staff')) {
+        return { tier: 'Tier B', badgeClass: 'bg-cyan-950/70 border-cyan-500/40 text-cyan-300' };
+      }
+      return { tier: 'Tier C', badgeClass: 'bg-slate-900 border-slate-700 text-slate-400' };
+    }
+
+    // Safe clipboard copy
+    function copyTextToClipboard(text, successMsg = "Copied to clipboard!") {
+      const tempInput = document.createElement("textarea");
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand("copy");
+        showToast(successMsg, "success");
+      } catch (err) {
+        showToast("Could not copy text", "error");
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    async function extractEmailFromCommitEvents(username) {
+      try {
+        const res = await fetch(`https://api.github.com/users/${username}/events/public?per_page=30`, {
+          headers: getHeaders()
+        });
+        if (!res.ok) return null;
+        
+        const events = await res.json();
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        for (const event of events) {
+          if (event.type === 'PushEvent' && event.payload && event.payload.commits) {
+            for (const commit of event.payload.commits) {
+              const authorEmail = commit.author?.email;
+              if (authorEmail && 
+                  !authorEmail.includes('noreply.github.com') && 
+                  !authorEmail.includes('example.com') &&
+                  emailRegex.test(authorEmail)) {
+                return { email: authorEmail, source: 'Git Commit PushEvent' };
+              }
+            }
+          }
+        }
+      } catch (err) {
+        return null;
+      }
+      return null;
+    }
+
+    async function executeLeadScan(e) {
+      if (e) e.preventDefault();
+      if (state.isScanning) return;
+
+      const role = elements.roleInput.value.trim();
+      const location = elements.locationInput.value.trim();
+      const language = elements.languageInput.value.trim();
+      const minFollowers = elements.minFollowersInput.value || 0;
+      const limit = parseInt(elements.limitInput.value, 10) || 30;
+      const deepScan = elements.deepScanCheckbox.checked;
+
+      // Construct GitHub search query
+      const queryParts = [];
+      if (role) queryParts.push(`${role} in:bio`);
+      if (location) queryParts.push(`location:${location}`);
+      if (minFollowers) queryParts.push(`followers:>=${minFollowers}`);
+      if (language) queryParts.push(`language:${language}`);
+
+      const fullQuery = queryParts.join(' ');
+      if (!fullQuery) {
+        showToast("Please enter at least one search criterion.", "error");
+        return;
+      }
+
+      state.isScanning = true;
+      state.leads = [];
+      elements.scanProgressCard.classList.remove('hidden');
+      elements.submitSearchBtn.disabled = true;
+      elements.submitSearchBtn.classList.add('opacity-50');
+      elements.scanProgressBar.style.width = '5%';
+      elements.scanPercentText.innerText = '5%';
+      elements.scanStatusMsg.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 pulse-radar"></span> Querying GitHub users index...`;
+
+      try {
+        const searchUrl = `https://api.github.com/search/users?q=${encodeURIComponent(fullQuery)}&per_page=${limit}`;
+        const searchRes = await fetch(searchUrl, { headers: getHeaders() });
+        
+        if (!searchRes.ok) {
+          const errData = await searchRes.json().catch(() => ({}));
+
+          // Graceful Rate Limit Interception (403 Rate limit exceeded)
+          if (searchRes.status === 403 || (errData.message && errData.message.toLowerCase().includes('rate limit'))) {
+            showToast("GitHub API rate limit exceeded (60 req/hr). Add a PAT to unlock 5,000 req/hr.", "error");
+            openTokenModal(true);
+            throw new Error("GitHub public rate limit exceeded. Please connect a free GitHub PAT to continue.");
+          }
+
+          if (searchRes.status === 401) {
+            wipeStoredToken();
+            throw new Error("Stored token is invalid or expired. Reverting to public mode.");
+          }
+
+          throw new Error(errData.message || `GitHub error: ${searchRes.status}`);
+        }
+
+        const searchData = await searchRes.json();
+        const items = searchData.items || [];
+
+        if (items.length === 0) {
+          elements.scanStatusMsg.innerText = "No matching profiles found for this query.";
+          showToast("No developers matched your filters.", "info");
+          renderTable();
+          return;
+        }
+
+        elements.scanStatusMsg.innerText = `Found ${items.length} engineering profiles. Mining details & commits...`;
+        let completed = 0;
+
+        for (const item of items) {
+          try {
+            // Fetch detailed user profile
+            const profileRes = await fetch(`https://api.github.com/users/${item.login}`, { headers: getHeaders() });
+            
+            // Check for rate limiting inside batch profile fetching
+            if (profileRes.status === 403) {
+              showToast("GitHub rate limit reached during scan. Connect a token to unlock 5,000 req/hr.", "error");
+              openTokenModal(true);
+              break;
+            }
+
+            if (!profileRes.ok) continue;
+            const p = await profileRes.json();
+
+            let email = p.email || null;
+            let emailSource = email ? 'Public Profile' : null;
+
+            // Deep Commit scan if profile email is hidden
+            if (!email && deepScan) {
+              const minedResult = await extractEmailFromCommitEvents(item.login);
+              if (minedResult) {
+                email = minedResult.email;
+                emailSource = minedResult.source;
+              }
+            }
+
+            // Fetch GitHub social accounts to catch verified LinkedIn links
+            let socials = [];
+            try {
+              const socialsRes = await fetch(`https://api.github.com/users/${item.login}/social_accounts`, { headers: getHeaders() });
+              if (socialsRes.ok) {
+                socials = await socialsRes.json();
+              }
+            } catch (socErr) {}
+
+            const newLead = {
+              id: p.id,
+              username: p.login,
+              name: p.name || p.login,
+              bio: p.bio || 'Tech Engineer',
+              company: (p.company || '').replace('@', '').trim() || 'Software Team',
+              location: p.location || location || 'Unknown',
+              email: email,
+              emailSource: emailSource,
+              avatar: p.avatar_url,
+              profileUrl: p.html_url,
+              blog: p.blog,
+              repos: p.public_repos || 0,
+              followers: p.followers || 0
+            };
+
+            newLead.linkedIn = resolveLinkedIn(newLead, socials);
+            newLead.priority = computeTier(newLead);
+            state.leads.push(newLead);
+          } catch (itemErr) {
+            console.warn(`Failed profile parsing for ${item.login}`, itemErr);
+          }
+
+          completed++;
+          const percent = Math.round((completed / items.length) * 100);
+          elements.scanProgressBar.style.width = `${percent}%`;
+          elements.scanPercentText.innerText = `${percent}%`;
+          elements.scanStatusMsg.innerText = `Inspected ${completed}/${items.length} profiles (${state.leads.filter(l => l.email).length} emails verified)...`;
+          renderTable();
+          updateStats();
+        }
+
+        showToast(`Scan complete! Found ${state.leads.length} leads.`, "success");
+      } catch (error) {
+        console.error("Search error:", error);
+        showToast(error.message || "An error occurred during search", "error");
+        elements.scanStatusMsg.innerText = `Scan stopped: ${error.message}`;
+      } finally {
+        state.isScanning = false;
+        elements.submitSearchBtn.disabled = false;
+        elements.submitSearchBtn.classList.remove('opacity-50');
+        setTimeout(() => elements.scanProgressCard.classList.add('hidden'), 2500);
+        checkRateLimit();
+      }
+    }
+
+    function renderTable() {
+      const leadsToDisplay = state.filterVerifiedOnly 
+        ? state.leads.filter(l => l.email) 
+        : state.leads;
+
+      elements.resultCountPill.innerText = `${leadsToDisplay.length} profiles`;
+
+      if (leadsToDisplay.length === 0) {
+        elements.tableBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-500 font-mono text-xs">
+              ${state.leads.length > 0 ? "No profiles match the 'Verified Email Only' filter." : "No leads queried yet."}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      elements.tableBody.innerHTML = leadsToDisplay.map((lead) => `
+        <tr class="hover:bg-slate-900/60 transition-colors group">
+          <td class="py-3 px-4">
+            <div class="flex items-center space-x-3">
+              <img src="${lead.avatar}" class="w-8 h-8 rounded-full border border-slate-700 flex-shrink-0" alt="">
+              <div>
+                <div class="font-semibold text-white flex items-center gap-1.5">
+                  <span>${escapeHtml(lead.name)}</span>
+                </div>
+                <div class="text-[11px] font-mono text-slate-500 flex items-center gap-2">
+                  <span>@${lead.username}</span>
+                  <span class="text-[10px] text-slate-600">&bull; ${lead.followers} followers</span>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4 max-w-[220px]">
+            <p class="truncate text-slate-300" title="${escapeHtml(lead.bio)}">${escapeHtml(lead.bio)}</p>
+          </td>
+          <td class="py-3 px-4 text-slate-300">
+            <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300">
+              ${escapeHtml(lead.company)}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">
+            ${escapeHtml(lead.location)}
+          </td>
+          <td class="py-3 px-4 font-mono">
+            ${lead.email ? `
+              <div class="inline-flex items-center space-x-1.5 bg-emerald-950/40 border border-emerald-800/60 px-2 py-0.5 rounded">
+                <span class="text-emerald-300 text-[11px]">${lead.email}</span>
+                <button onclick="copyTextToClipboard('${lead.email}', 'Email copied!')" title="Copy Email" class="text-emerald-400 hover:text-white">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+              </div>
+              <div class="text-[9px] text-slate-500 mt-0.5">${lead.emailSource}</div>
+            ` : `
+              <span class="text-slate-600 italic text-[11px]">Hidden in commits</span>
+            `}
+          </td>
+          <td class="py-3 px-4 font-mono">
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${lead.priority?.badgeClass || 'bg-slate-900 border-slate-700 text-slate-400'}">
+              ${lead.priority?.tier || 'Tier C'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <div class="flex items-center justify-end space-x-1.5">
+              <!-- LinkedIn Direct or People Search Button -->
+              <a href="${lead.linkedIn ? lead.linkedIn.url : '#'}" target="_blank" rel="noreferrer" 
+                 title="${lead.linkedIn && lead.linkedIn.isDirect ? 'Direct LinkedIn Profile' : 'Search Profile on LinkedIn'}" 
+                 class="p-1.5 rounded bg-slate-900 hover:bg-[#0077b5] text-slate-400 hover:text-white transition border ${lead.linkedIn && lead.linkedIn.isDirect ? 'border-sky-500/50 text-sky-400' : 'border-slate-800'}">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                </svg>
+              </a>
+
+              <!-- Google X-Ray Search Button -->
+              ${lead.linkedIn && !lead.linkedIn.isDirect && lead.linkedIn.xrayUrl ? `
+                <a href="${lead.linkedIn.xrayUrl}" target="_blank" rel="noreferrer" title="Google X-Ray (High Accuracy LinkedIn Finder)" 
+                   class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-[10px] font-mono font-bold text-amber-400 border border-slate-800 hover:border-amber-500/40 transition">
+                  G-Ray
+                </a>
+              ` : ''}
+
+              <!-- GitHub Profile Button -->
+              <a href="${lead.profileUrl}" target="_blank" rel="noreferrer" class="p-1.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition border border-slate-800" title="Open GitHub Profile">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+              </a>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateStats() {
+      const total = state.leads.length;
+      const verified = state.leads.filter(l => l.email).length;
+      const recoveryRate = total > 0 ? Math.round((verified / total) * 100) : 0;
+
+      if (elements.statTotal) elements.statTotal.innerText = total;
+      if (elements.statVerified) elements.statVerified.innerText = verified;
+      if (elements.statCommitRate) elements.statCommitRate.innerText = `${recoveryRate}%`;
+    }
+
+    function toggleFilterEmailOnly() {
+      state.filterVerifiedOnly = !state.filterVerifiedOnly;
+      if (state.filterVerifiedOnly) {
+        elements.filterEmailDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        elements.filterEmailOnlyBtn.classList.add('border-emerald-500/50', 'text-emerald-300');
+      } else {
+        elements.filterEmailDot.className = "w-2 h-2 rounded-full bg-slate-600";
+        elements.filterEmailOnlyBtn.classList.remove('border-emerald-500/50', 'text-emerald-300');
+      }
+      renderTable();
+    }
+
+    function applyPreset(name, role, location, language, minFollowers) {
+      elements.roleInput.value = role;
+      elements.locationInput.value = location;
+      elements.languageInput.value = language;
+      elements.minFollowersInput.value = minFollowers;
+      showToast(`Preset loaded: ${name}`, "info");
+    }
+
+    function exportLeadsCSV() {
+      const dataset = state.filterVerifiedOnly ? state.leads.filter(l => l.email) : state.leads;
+      if (dataset.length === 0) {
+        showToast("No leads available to export", "error");
+        return;
+      }
+
+      const headers = ["Full Name", "Job Title / Bio", "Company", "Location", "Priority", "Verified Email", "Email Source", "LinkedIn URL", "GitHub URL", "Public Repos", "Followers"];
+      const csvRows = [headers.join(",")];
+
+      dataset.forEach(l => {
+        const row = [
+          `"${(l.name || '').replace(/"/g, '""')}"`,
+          `"${(l.bio || '').replace(/"/g, '""')}"`,
+          `"${(l.company || '').replace(/"/g, '""')}"`,
+          `"${(l.location || '').replace(/"/g, '""')}"`,
+          `"${(l.priority ? l.priority.tier : 'Tier C')}"`,
+          `"${l.email || ''}"`,
+          `"${l.emailSource || ''}"`,
+          `"${(l.linkedIn ? l.linkedIn.url : '')}"`,
+          `"${l.profileUrl}"`,
+          l.repos,
+          l.followers
+        ];
+        csvRows.push(row.join(","));
+      });
+
+      // Byte Order Mark (\uFEFF) ensures UTF-8 and Arabic character parsing in Excel
+      const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().slice(0, 10);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `DevMind_Target_List_${timestamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`Exported ${dataset.length} leads with Priority & LinkedIn to CSV!`, "success");
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // ==================== APP INITIALIZATION ====================
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. Search form listener
+      elements.searchForm.addEventListener('submit', executeLeadScan);
+
+      // 2. Read stored token from client browser localStorage (if previously connected)
+      const savedToken = getStoredToken();
+      const savedUser = getStoredUser();
+
+      if (savedToken) {
+        state.token = savedToken;
+        state.user = savedUser;
+
+        if (savedUser) {
+          updateHeaderUIConnected(savedUser, null, null);
+        } else {
+          elements.tokenStatusText.innerText = "Token Active";
+          elements.tokenStatusDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        }
+
+        // Live verify token in background and refresh rate limits
+        try {
+          const res = await verifyGitHubToken(savedToken);
+          state.user = {
+            login: res.user.login,
+            avatar_url: res.user.avatar_url,
+            name: res.user.name || res.user.login
+          };
+          setStoredUser(state.user);
+          updateHeaderUIConnected(state.user, res.rateRemaining, res.rateLimit);
+        } catch (err) {
+          console.warn("Stored token verification failed:", err);
+          updateHeaderUIDisconnected();
+        }
+      } else {
+        // No token saved: default to unauthenticated public mode without prompt
+        updateHeaderUIDisconnected();
+      }
+
+      // Check current rate limit (unauthenticated or authenticated)
+      checkRateLimit();
+    });
+  </script>
+</body>
+</html>
